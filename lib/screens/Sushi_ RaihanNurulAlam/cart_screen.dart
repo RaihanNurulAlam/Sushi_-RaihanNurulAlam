@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_latihan/provider/cart.dart';
 import 'package:flutter_latihan/screens/Sushi_%20RaihanNurulAlam/dashboard.dart';
+import 'package:flutter_latihan/screens/Sushi_%20RaihanNurulAlam/payment_screen.dart';
 import 'package:provider/provider.dart';
 
 class CartScreen extends StatefulWidget {
@@ -26,8 +27,9 @@ class _CartScreenState extends State<CartScreen> {
               int.parse(cartModel.price.toString()).toDouble();
           totalPrice += price;
 
-          taxAndService = (totalPrice * 0.11).toDouble();
-          totalPayment = (totalPrice + taxAndService).toDouble();
+          taxAndService = double.parse((totalPrice * 0.11).toStringAsFixed(2));
+          totalPayment =
+              double.parse((totalPrice + taxAndService).toStringAsFixed(2));
         }
 
         return Scaffold(
@@ -110,7 +112,28 @@ class _CartScreenState extends State<CartScreen> {
                           ),
                           trailing: IconButton(
                             onPressed: () {
-                              value.deleteItemCart(food);
+                              setState(() {
+                                // Hapus item dari keranjang
+                                value.deleteItemCart(food);
+
+                                //Hitung ulang total harga
+                                totalPrice = 0;
+                                for (var cartModel in value.cart) {
+                                  double itemPrice =
+                                      int.parse(cartModel.quantity.toString()) *
+                                          int.parse(cartModel.price.toString())
+                                              .toDouble();
+                                  totalPrice += itemPrice;
+                                }
+
+                                // Hitung ulang pajak dan total pembayaran
+                                taxAndService = double.parse(
+                                    (totalPrice * 0.11).toStringAsFixed(2));
+                                totalPayment = double.parse(
+                                    (totalPrice + taxAndService)
+                                        .toStringAsFixed(2));
+                              });
+
                               if (value.cart.isEmpty) {
                                 price = 0;
                                 totalPrice = 0;
@@ -128,7 +151,12 @@ class _CartScreenState extends State<CartScreen> {
                     ),
                     SizedBox(height: 80),
                     CupertinoButton(
-                      child: Text('Add Some Food'),
+                      child: Text(
+                        'Add Some Food',
+                        style: TextStyle(
+                          color: Colors.redAccent,
+                        ),
+                      ),
                       onPressed: () {
                         Navigator.pushAndRemoveUntil(
                           context,
@@ -162,23 +190,62 @@ class _CartScreenState extends State<CartScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('Price'),
-                                Text('IDR $totalPrice'),
+                                Text(
+                                  'Price',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 20,
+                                  ),
+                                ),
+                                Text(
+                                  'IDR $totalPrice',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ],
                             ),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('Tax and Service'),
-                                Text('IDR $taxAndService'),
+                                Text(
+                                  'Tax and Service',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 20,
+                                  ),
+                                ),
+                                Text(
+                                  'IDR $taxAndService',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ],
                             ),
                             Divider(),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('Total Price'),
-                                Text('IDR $totalPayment'),
+                                Text(
+                                  'Total Price',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 20,
+                                  ),
+                                ),
+                                Text(
+                                  'IDR $totalPayment',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ],
                             ),
                           ],
@@ -188,16 +255,33 @@ class _CartScreenState extends State<CartScreen> {
                         margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
                         width: MediaQuery.of(context).size.width,
                         child: CupertinoButton(
-                          color: Theme.of(context).primaryColor,
+                          color: Colors.redAccent,
+                          borderRadius: BorderRadius.circular(50),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: const [
-                              Text('Pay Now'),
+                              Text(
+                                'Pay Now',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                               SizedBox(width: 10),
                               Icon(CupertinoIcons.arrow_right),
                             ],
                           ),
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PaymentScreen(
+                                  totalPayment: totalPayment.toString(),
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ],

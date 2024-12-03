@@ -1,8 +1,10 @@
 import 'dart:convert';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_latihan/models/food.dart';
+import 'package:flutter_latihan/screens/Sushi_%20RaihanNurulAlam/detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -14,6 +16,7 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   List<Food> foods = [];
   List<Food> _foundedFoods = [];
+  TextEditingController searchContoller = TextEditingController();
 
   Future<void> getFoods() async {
     String dataFoodJson = await rootBundle.loadString('assets/json/food.json');
@@ -23,8 +26,15 @@ class _SearchScreenState extends State<SearchScreen> {
       foods = jsonMap.map((e) => Food.fromJson(e)).toList();
       _foundedFoods = foods;
     });
+  }
 
-    debugPrint(foods[0].name);
+  onSearchFood(String query) {
+    setState(() {
+      _foundedFoods = foods
+          .where((element) =>
+              element.name!.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
   }
 
   @override
@@ -39,16 +49,109 @@ class _SearchScreenState extends State<SearchScreen> {
       appBar: AppBar(
         title: Text('Search Food'),
       ),
-      body: ListView.builder(
-        itemCount: _foundedFoods.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            leading: Image.asset(_foundedFoods[index].imagePath.toString()),
-            title: Text(_foundedFoods[index].name.toString()),
-            subtitle: Text(_foundedFoods[index].price.toString()),
-            trailing: Text(_foundedFoods[index].rating.toString()),
-          );
-        },
+      body: Column(
+        children: [
+          // Search bar
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              controller: searchContoller,
+              decoration: InputDecoration(
+                  hintText: 'Search Food',
+                  contentPadding: EdgeInsets.fromLTRB(18, 0, 18, 0),
+                  prefixIcon: Icon(CupertinoIcons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  suffixIcon: Visibility(
+                    visible: _foundedFoods.isEmpty ? true : false,
+                    child: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _foundedFoods = foods;
+                          searchContoller.text = '';
+                        });
+                      },
+                      icon: Icon(CupertinoIcons.clear_circled),
+                    ),
+                  )),
+              textInputAction: TextInputAction.search,
+              onChanged: (value) {
+                setState(() {
+                  onSearchFood(value.toString());
+                });
+              },
+            ),
+          ),
+
+          // List food
+          _foundedFoods.isEmpty
+              ? Container(
+                  padding: EdgeInsets.only(top: 100),
+                  child: Text(
+                    'No Food Found',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 26,
+                    ),
+                  ),
+                )
+              : ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _foundedFoods.length,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DetailScreen(
+                              food: foods[index],
+                            ),
+                          ),
+                        );
+                      },
+                      leading: SizedBox(
+                        width: 50,
+                        height: 50,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: Image.asset(
+                            _foundedFoods[index].imagePath.toString(),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      title: Text(
+                        _foundedFoods[index].name.toString(),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      subtitle: Text('IDR ${_foundedFoods[index].price}'),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            CupertinoIcons.star_fill,
+                            size: 15,
+                            color: Colors.yellow,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            _foundedFoods[index].rating.toString(),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+        ],
       ),
     );
   }
